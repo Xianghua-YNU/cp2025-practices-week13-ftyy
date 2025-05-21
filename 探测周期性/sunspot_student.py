@@ -14,7 +14,7 @@ def load_sunspot_data(url):
     从本地文件读取太阳黑子数据
     只保留第2(年份)和3(太阳黑子数)列
     """
-    data = np.loadtxt(../susport_data.txt,usecols=(2, 3))
+    data = np.loadtxt(url,usecols=(2, 3))
     years = data[:, 0]
     sunspots = data[:, 1]
     return years, sunspots
@@ -69,7 +69,7 @@ def find_main_period(frequencies, power):
 
 def main():
     # 数据文件路径
-    data = "sunspot_data.txt"
+    data = "../sunspot_data.txt"
     
     # 1. 加载并可视化数据
     years, sunspots = load_sunspot_data(data)
