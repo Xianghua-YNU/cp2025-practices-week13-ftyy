@@ -52,7 +52,6 @@ def plot_data(data, title="Dow Jones Industrial Average"):
     plt.legend()
     plt.grid()
     plt.show()
-    raise NotImplementedError("请在 {} 中实现此函数。".format(__file__))
 
 def fourier_filter(data, keep_fraction=0.1):
     """
