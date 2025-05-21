@@ -101,7 +101,6 @@ def find_energy_level_bisection(n, V, w, m, precision=0.001, E_min=0.001, E_max=
     if E_max is None:
         E_max = V - 1e-6  # 避免除零
 
-    # 定义偶宇称和奇宇称的方程
     def even_func(E):
         E_joule = E * EV_TO_JOULE
         V_joule = V * EV_TO_JOULE
@@ -123,31 +122,37 @@ def find_energy_level_bisection(n, V, w, m, precision=0.001, E_min=0.001, E_max=
             return y1 - y3
         except Exception:
             return np.nan
-        # 选择对应的方程
+
     func = even_func if n % 2 == 0 else odd_func
 
-    # 粗略扫描，找到第n个根所在的区间
-    scan_points = 1000
-    E_scan = np.linspace(E_min, E_max, scan_points)
-    f_scan = func(E_scan)
-    # 处理nan
-    f_scan = np.where(np.isnan(f_scan), 1e6, f_scan)
-    sign_changes = np.where(np.diff(np.sign(f_scan)))[0]
-    if len(sign_changes) <= n:
-        raise ValueError("未找到足够的能级根，请检查参数设置。")
-    a = E_scan[sign_changes[n]]
-    b = E_scan[sign_changes[n] + 1]
+    # 判断区间端点是否异号
+    fa = func(E_min)
+    fb = func(E_max)
+    if np.isnan(fa) or np.isnan(fb):
+        raise ValueError("区间端点函数值无效，请检查参数设置。")
+    if fa * fb > 0:
+        # 若区间较大，尝试自动扫描
+        scan_points = 1000
+        E_scan = np.linspace(E_min, E_max, scan_points)
+        f_scan = func(E_scan)
+        f_scan = np.where(np.isnan(f_scan), 1e6, f_scan)
+        sign_changes = np.where(np.diff(np.sign(f_scan)))[0]
+        if len(sign_changes) == 0:
+            raise ValueError("指定区间内未找到根，请检查参数设置。")
+        # 默认取第一个根
+        a = E_scan[sign_changes[0]]
+        b = E_scan[sign_changes[0] + 1]
+    else:
+        a, b = E_min, E_max
 
     # 二分法
     while b - a > precision:
         mid = (a + b) / 2
-        fa = func(a)
-        fb = func(b)
         fm = func(mid)
-        # 处理nan
         if np.isnan(fm):
             mid += precision * 0.1
             fm = func(mid)
+        fa = func(a)
         if fa * fm < 0:
             b = mid
         else:
