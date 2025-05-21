@@ -44,7 +44,7 @@ def plot_data(data, title="Dow Jones Industrial Average"):
     # TODO: 实现数据可视化 (约10行代码)
     # [STUDENT_CODE_HERE]
     # 提示: 使用plt.plot绘制数据，添加适当的标签和标题
-    plt.figure(figsize=(10, 5))
+    fig = plt.figure(figsize=(10, 5))
     plt.plot(data, label='Dow Jones Index', color='blue')
     plt.title(title)
     plt.xlabel('Time')
@@ -52,6 +52,7 @@ def plot_data(data, title="Dow Jones Industrial Average"):
     plt.legend()
     plt.grid()
     plt.show()
+    return fig
 
 def fourier_filter(data, keep_fraction=0.1):
     """
@@ -71,15 +72,20 @@ def fourier_filter(data, keep_fraction=0.1):
     # 2. 根据keep_fraction计算保留的系数数量
     # 3. 创建滤波后的系数数组
     # 4. 使用np.fft.irfft计算逆变换
-    n = len(data)
-    coeff = np.fft.rfft(data)
-    num_coeff = int(n * keep_fraction)
-    filtered_coeff = np.zeros_like(coeff)
-    filtered_coeff[:num_coeff] = coeff[:num_coeff]
-    filtered_coeff[-num_coeff:] = coeff[-num_coeff:]
-    filtered_data = np.fft.irfft(filtered_coeff, n=n)
-    return filtered_data, coeff
-
+   # 计算实数信号的傅立叶变换
+    fft_coeff = np.fft.rfft(data)
+    
+    # 计算保留的系数数量
+    cutoff = int(len(fft_coeff) * keep_fraction)
+    
+    # 创建滤波后的系数数组
+    filtered_coeff = fft_coeff.copy()
+    filtered_coeff[cutoff:] = 0
+    
+    # 计算逆变换
+    filtered_data = np.fft.irfft(filtered_coeff, n=len(data))
+    
+    return filtered_data, fft_coeff
 def plot_comparison(original, filtered, title="Fourier Filter Result"):
     """
     绘制原始数据和滤波结果的比较
