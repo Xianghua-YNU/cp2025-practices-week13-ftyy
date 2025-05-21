@@ -115,31 +115,51 @@ def secant_method(f, a, b, tol=1e-8, max_iter=100):
     返回:
         tuple: (近似解, 迭代次数, 收敛标志)
     """
-    x0, x1 = a, b
-    f0, f1 = f(x0), f(x1)
-    if abs(f0) < tol:
-        return x0, 0, True
-    if abs(f1) < tol:
-        return x1, 0, True
-    if f0 * f1 > 0:
-        raise ValueError("f(a) and f(b) must have different signs.")
-    if abs(x1 - x0) < tol:
-        return x1, 0, False
+    fa = f(a)
+    fb = f(b)
+    
+    if abs(fa) < tol:
+        return a, 0, True
+    if abs(fb) < tol:
+        return b, 0, True
+    
+    if fa * fb > 0:  # 确保区间端点函数值异号
+        print("警告: 区间端点函数值同号，弦截法可能不收敛")
+    
+    iterations = 0
     converged = False
-    for iterations in range(1, max_iter + 1):
-        if abs(f1 - f0) < 1e-14:  # 避免除以零
+    
+    x0, x1 = a, b
+    f0, f1 = fa, fb
+    
+    for i in range(max_iter):
+        # 避免除以接近零的数
+        if abs(f1 - f0) < 1e-14:
             break
+        
+        # 弦截法迭代公式
         x2 = x1 - f1 * (x1 - x0) / (f1 - f0)
-        if abs(x2 - x1) < tol:
+        f2 = f(x2)
+        
+        if abs(f2) < tol:  # 函数值接近零
             converged = True
+            iterations = i + 1
             x1 = x2
             break
-        x0, x1 = x1, x2
-        f0, f1 = f1, f(x1)
-    else:
-        iterations = max_iter
+        
+        # 检查相对变化是否小于容差
+        if abs((x2 - x1) / x1) < tol:
+            converged = True
+            iterations = i + 1
+            x1 = x2
+            break
+        
+        # 更新迭代值
+        x0, f0 = x1, f1
+        x1, f1 = x2, f2
+        iterations = i + 1
+    
     return x1, iterations, converged
-
 
 def plot_lagrange_equation(r_min, r_max, num_points=1000):
     """
