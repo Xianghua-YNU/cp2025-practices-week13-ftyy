@@ -23,7 +23,7 @@ def load_data(filename):
     # [STUDENT_CODE_HERE]
     # 提示: 使用np.loadtxt加载数据文件，处理可能的异常
     try:
-        data = np.loadtxt('dow.txt', delimiter=',')
+        data = np.loadtxt(filename, delimiter=',')
     except Exception as e:
         print("Error loading data:", e)
         data = np.array([])
@@ -72,13 +72,13 @@ def fourier_filter(data, keep_fraction=0.1):
     # 3. 创建滤波后的系数数组
     # 4. 使用np.fft.irfft计算逆变换
     n = len(data)
-    fft_coeff = np.fft.rfft(data)
+    coeff = np.fft.rfft(data)
     num_coeff = int(n * keep_fraction)
-    filtered_coeff = np.zeros_like(fft_coeff)
-    filtered_coeff[:num_coeff] = fft_coeff[:num_coeff]
-    filtered_coeff[-num_coeff:] = fft_coeff[-num_coeff:]
+    filtered_coeff = np.zeros_like(coeff)
+    filtered_coeff[:num_coeff] = coeff[:num_coeff]
+    filtered_coeff[-num_coeff:] = coeff[-num_coeff:]
     filtered_data = np.fft.irfft(filtered_coeff, n=n)
-    return filtered_data, fft_coeff
+    return filtered_data, coeff
 
 def plot_comparison(original, filtered, title="Fourier Filter Result"):
     """
@@ -98,7 +98,7 @@ def plot_comparison(original, filtered, title="Fourier Filter Result"):
     # 1. 使用不同颜色绘制原始和滤波数据
     # 2. 添加图例、标签和标题
     # 3. 使用plt.grid添加网格线
-    plt.figure(figsize=(10, 5))
+    fig = plt.figure(figsize=(10, 5))
     plt.plot(original, label='Original Data', color='blue', alpha=0.5)
     plt.plot(filtered, label='Filtered Data', color='red')
     plt.title(title)
@@ -107,6 +107,7 @@ def plot_comparison(original, filtered, title="Fourier Filter Result"):
     plt.legend()
     plt.grid()
     plt.show()
+    return fig  # 确保返回Figure对象
 
 def main():
     # 任务1：数据加载与可视化
@@ -115,20 +116,11 @@ def main():
     
     # 任务2：傅立叶变换与滤波（保留前10%系数）
     # 保留前10%系数示例
-    coeff = np.fft.rfft(data)
-    cutoff = int(len(coeff) * 0.1)
-    coeff[cutoff:] = 0  # 将后90%系数设为0
-    filtered = np.fft.irfft(coeff)
     filtered_10, coeff = fourier_filter(data, 0.1)
     plot_comparison(data, filtered_10, "Fourier Filter (Keep Top 10% Coefficients)")
-    
+
     # 任务3：修改滤波参数（保留前2%系数）
     # 保留前2%系数示例
-    coeff = np.fft.rfft(data)
-    cutoff = int(len(coeff) * 0.02)
-    coeff[cutoff:] = 0  # 将后98%系数设为0
-    filtered = np.fft.irfft(coeff)
-    filtered_2 = np.fft.irfft(coeff)
     filtered_2, _ = fourier_filter(data, 0.02)
     plot_comparison(data, filtered_2, "Fourier Filter (Keep Top 2% Coefficients)")
 
