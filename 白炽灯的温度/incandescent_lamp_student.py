@@ -34,7 +34,9 @@ def planck_law(wavelength, temperature):
     """
     # TODO: 实现普朗克黑体辐射公式
     # [STUDENT_CODE_HERE]
-    raise NotImplementedError("请在 {} 中实现此函数".format(__file__))
+    numerator = 2.0 * H * C**2 / (wavelength**5)
+    exponent = np.exp(H * C / (wavelength * K_B * temperature))
+    intensity = numerator / (exponent - 1.0)
     return intensity
 
 
@@ -51,7 +53,19 @@ def calculate_visible_power_ratio(temperature):
     # TODO: 使用数值积分计算可见光效率
     # 提示: 使用scipy.integrate.quad进行积分
     # [STUDENT_CODE_HERE]
-    raise NotImplementedError("请在 {} 中实现此函数".format(__file__))
+    # 定义积分范围
+    def integrand(wavelength):
+        return planck_law(wavelength, temperature)
+    
+    # 计算总辐射功率
+    total_power, _ = integrate.quad(integrand, 1e-9, 10000e-9)
+
+    # 计算可见光功率
+    visible_power, _ = integrate.quad(integrand, VISIBLE_LIGHT_MIN, VISIBLE_LIGHT_MAX)
+
+    # 计算可见光效率
+    visible_power_ratio = visible_power / total_power
+
     return visible_power_ratio
 
 
@@ -67,7 +81,19 @@ def plot_efficiency_vs_temperature(temp_range):
     """
     # TODO: 计算并绘制效率-温度曲线
     # [STUDENT_CODE_HERE]
-    raise NotImplementedError("请在 {} 中实现此函数".format(__file__))
+    # 创建图形对象
+    # 设置图形大小
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    efficiencies = np.array([calculate_visible_power_ratio(temp) for temp in temp_range])# 计算效率
+    # 绘制效率-温度曲线
+    ax.plot(temp_range, efficiencies, label='Efficiency vs Temperature')
+    ax.set_xlabel('Temperature (K)')
+    ax.set_ylabel('Visible Light Efficiency')
+    ax.set_title('Incandescent Lamp Efficiency vs Temperature')
+    ax.grid(True, alpha=0.3)
+    ax.legend()
+    
     return fig, temp_range, efficiencies
 
 
@@ -80,8 +106,16 @@ def find_optimal_temperature():
     """
     # TODO: 使用scipy.optimize.minimize_scalar寻找最优温度
     # 提示: 设置bounds=(1000,10000)和options={'xatol':1.0}
-    # [STUDENT_CODE_HERE]
-    raise NotImplementedError("请在 {} 中实现此函数".format(__file__))
+    
+    # 定义目标函数（负效率）
+    def objective_function(temperature):
+        return -calculate_visible_power_ratio(temperature)
+    
+    # 使用黄金分割法寻找最优温度
+    result = minimize_scalar(objective_function, bounds=(1000, 10000), method='bounded', options={'xatol': 1.0})
+    
+    optimal_temp = result.x# 最优温度
+    optimal_efficiency = -result.fun# 最大效率
     return optimal_temp, optimal_efficiency
 
 
