@@ -65,8 +65,8 @@ def plot_energy_functions(E_values, y1, y2, y3):
     
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.plot(E_values, y1, 'b-', label=r'$y_1 = \tan\sqrt{w^2 m E / 2\hbar^2}$')
-    ax.plot(E_values, y2, 'r--', label=r'$y_2 = \sqrt{(V-E)/E}$ (偶宇称)')
-    ax.plot(E_values, y3, 'g-.', label=r'$y_3 = -\sqrt{E/(V-E)}$ (奇宇称)')
+    ax.plot(E_values, y2, 'r--', label=r'$y_2 = \sqrt{(V-E)/E}$ (even parity)')
+    ax.plot(E_values, y3, 'g-.', label=r'$y_3 = -\sqrt{E/(V-E)}$ (odd parity)')
     ax.axhline(0, color='k', linestyle='--', alpha=0.3)
     ax.set_xlim(0, np.max(E_values))
     ax.set_ylim(-10, 10)
@@ -130,20 +130,20 @@ def find_energy_level_bisection(n, V, w, m, precision=0.001, E_min=0.001, E_max=
     fb = func(E_max)
     if np.isnan(fa) or np.isnan(fb):
         raise ValueError("区间端点函数值无效，请检查参数设置。")
-    if fa * fb > 0:
-        # 若区间较大，尝试自动扫描
+    # 如果区间端点异号，直接用该区间
+    if fa * fb < 0:
+        a, b = E_min, E_max
+    else:
+        # 自动扫描，找到第n个根
         scan_points = 1000
         E_scan = np.linspace(E_min, E_max, scan_points)
         f_scan = func(E_scan)
         f_scan = np.where(np.isnan(f_scan), 1e6, f_scan)
         sign_changes = np.where(np.diff(np.sign(f_scan)))[0]
-        if len(sign_changes) == 0:
-            raise ValueError("指定区间内未找到根，请检查参数设置。")
-        # 默认取第一个根
-        a = E_scan[sign_changes[0]]
-        b = E_scan[sign_changes[0] + 1]
-    else:
-        a, b = E_min, E_max
+        if len(sign_changes) <= n:
+            raise ValueError("指定区间内未找到足够的根，请检查参数设置。")
+        a = E_scan[sign_changes[n]]
+        b = E_scan[sign_changes[n] + 1]
 
     # 二分法
     while b - a > precision:
