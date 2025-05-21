@@ -22,9 +22,12 @@ def load_data(filename):
     # TODO: 实现数据加载功能 (约5行代码)
     # [STUDENT_CODE_HERE]
     # 提示: 使用np.loadtxt加载数据文件，处理可能的异常
-    
-    raise NotImplementedError("请在 {} 中实现此函数。".format(__file__))
-    
+    try:
+        data = np.loadtxt(filename, delimiter=',')
+    except Exception as e:
+        print("Error loading data:", e)
+        data = np.array([])
+
     return data
 
 def plot_data(data, title="Dow Jones Industrial Average"):
@@ -41,8 +44,15 @@ def plot_data(data, title="Dow Jones Industrial Average"):
     # TODO: 实现数据可视化 (约10行代码)
     # [STUDENT_CODE_HERE]
     # 提示: 使用plt.plot绘制数据，添加适当的标签和标题
-    
-    raise NotImplementedError("请在 {} 中实现此函数。".format(__file__))
+    fig = plt.figure(figsize=(10, 5))
+    plt.plot(data, label='Dow Jones Index', color='blue')
+    plt.title(title)
+    plt.xlabel('Time')
+    plt.ylabel('Index Value')
+    plt.legend()
+    plt.grid()
+    plt.show()
+    return fig
 
 def fourier_filter(data, keep_fraction=0.1):
     """
@@ -62,11 +72,20 @@ def fourier_filter(data, keep_fraction=0.1):
     # 2. 根据keep_fraction计算保留的系数数量
     # 3. 创建滤波后的系数数组
     # 4. 使用np.fft.irfft计算逆变换
+   # 计算实数信号的傅立叶变换
+    fft_coeff = np.fft.rfft(data)
     
-    raise NotImplementedError("请在 {} 中实现此函数。".format(__file__))
+    # 计算保留的系数数量
+    cutoff = int(len(fft_coeff) * keep_fraction)
+    
+    # 创建滤波后的系数数组
+    filtered_coeff = fft_coeff.copy()
+    filtered_coeff[cutoff:] = 0
+    
+    # 计算逆变换
+    filtered_data = np.fft.irfft(filtered_coeff, n=len(data))
     
     return filtered_data, fft_coeff
-
 def plot_comparison(original, filtered, title="Fourier Filter Result"):
     """
     绘制原始数据和滤波结果的比较
@@ -85,8 +104,16 @@ def plot_comparison(original, filtered, title="Fourier Filter Result"):
     # 1. 使用不同颜色绘制原始和滤波数据
     # 2. 添加图例、标签和标题
     # 3. 使用plt.grid添加网格线
-    
-    raise NotImplementedError("请在 {} 中实现此函数。".format(__file__))
+    fig = plt.figure(figsize=(10, 5))
+    plt.plot(original, label='Original Data', color='blue', alpha=0.5)
+    plt.plot(filtered, label='Filtered Data', color='red')
+    plt.title(title)
+    plt.xlabel('Time')
+    plt.ylabel('Index Value')
+    plt.legend()
+    plt.grid()
+    plt.show()
+    return fig  # 确保返回Figure对象
 
 def main():
     # 任务1：数据加载与可视化
@@ -94,10 +121,12 @@ def main():
     plot_data(data, "Dow Jones Industrial Average - Original Data")
     
     # 任务2：傅立叶变换与滤波（保留前10%系数）
+    # 保留前10%系数示例
     filtered_10, coeff = fourier_filter(data, 0.1)
     plot_comparison(data, filtered_10, "Fourier Filter (Keep Top 10% Coefficients)")
-    
+
     # 任务3：修改滤波参数（保留前2%系数）
+    # 保留前2%系数示例
     filtered_2, _ = fourier_filter(data, 0.02)
     plot_comparison(data, filtered_2, "Fourier Filter (Keep Top 2% Coefficients)")
 

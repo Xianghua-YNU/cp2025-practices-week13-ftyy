@@ -32,8 +32,17 @@ def calculate_y_values(E_values, V, w, m):
     # [STUDENT_CODE_HERE]
     # 提示: 注意单位转换和避免数值计算中的溢出或下溢
     
-    raise NotImplementedError("请在 {} 中实现此函数。".format(__file__))
-    
+    E_joules = E_values * EV_TO_JOULE
+    V_joule = V * EV_TO_JOULE
+    factor = (w ** 2 * m) / (2 * HBAR ** 2)
+    sqrt_arg = factor * E_joules
+    y1 = np.tan(np.sqrt(sqrt_arg))
+    with np.errstate(divide='ignore', invalid='ignore'):
+        y2 = np.sqrt((V_joule - E_joules) / E_joules)
+        y3 = -np.sqrt(E_joules / (V_joule - E_joules))
+    y1 = np.where(np.isfinite(y1), y1, np.nan)
+    y2 = np.where(np.isfinite(y2), y2, np.nan)
+    y3 = np.where(np.isfinite(y3), y3, np.nan)
     return y1, y2, y3
 
 
@@ -54,8 +63,18 @@ def plot_energy_functions(E_values, y1, y2, y3):
     # [STUDENT_CODE_HERE]
     # 提示: 使用不同颜色和线型，添加适当的标签、图例和标题
     
-    raise NotImplementedError("请在 {} 中实现此函数。".format(__file__))
-    
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.plot(E_values, y1, 'b-', label=r'$y_1 = \tan\sqrt{w^2 m E / 2\hbar^2}$')
+    ax.plot(E_values, y2, 'r--', label=r'$y_2 = \sqrt{(V-E)/E}$ (even parity)')
+    ax.plot(E_values, y3, 'g-.', label=r'$y_3 = -\sqrt{E/(V-E)}$ (odd parity)')
+    ax.axhline(0, color='k', linestyle='--', alpha=0.3)
+    ax.set_xlim(0, np.max(E_values))
+    ax.set_ylim(-10, 10)
+    ax.set_xlabel('Energy E (eV)')
+    ax.set_ylabel('Function value')
+    ax.set_title('Square Potential Well Energy Functions')
+    ax.legend()
+    ax.grid(True, alpha=0.3)
     return fig
 
 
@@ -79,8 +98,66 @@ def find_energy_level_bisection(n, V, w, m, precision=0.001, E_min=0.001, E_max=
     # [STUDENT_CODE_HERE]
     # 提示: 需要考虑能级的奇偶性，偶数能级使用偶宇称方程，奇数能级使用奇宇称方程
     
-    raise NotImplementedError("请在 {} 中实现此函数。".format(__file__))
-    
+    if E_max is None:
+        E_max = V - 1e-6  # 避免除零
+
+    def even_func(E):
+        E_joule = E * EV_TO_JOULE
+        V_joule = V * EV_TO_JOULE
+        factor = (w ** 2 * m) / (2 * HBAR ** 2)
+        try:
+            y1 = np.tan(np.sqrt(factor * E_joule))
+            y2 = np.sqrt((V_joule - E_joule) / E_joule)
+            return y1 - y2
+        except Exception:
+            return np.nan
+
+    def odd_func(E):
+        E_joule = E * EV_TO_JOULE
+        V_joule = V * EV_TO_JOULE
+        factor = (w ** 2 * m) / (2 * HBAR ** 2)
+        try:
+            y1 = np.tan(np.sqrt(factor * E_joule))
+            y3 = -np.sqrt(E_joule / (V_joule - E_joule))
+            return y1 - y3
+        except Exception:
+            return np.nan
+
+    func = even_func if n % 2 == 0 else odd_func
+
+    # 判断区间端点是否异号
+    fa = func(E_min)
+    fb = func(E_max)
+    if np.isnan(fa) or np.isnan(fb):
+        raise ValueError("区间端点函数值无效，请检查参数设置。")
+    # 如果区间端点异号，直接用该区间
+    if fa * fb < 0:
+        a, b = E_min, E_max
+    else:
+        # 自动扫描，找到第n个根
+        scan_points = 1000
+        E_scan = np.linspace(E_min, E_max, scan_points)
+        f_scan = func(E_scan)
+        f_scan = np.where(np.isnan(f_scan), 1e6, f_scan)
+        sign_changes = np.where(np.diff(np.sign(f_scan)))[0]
+        if len(sign_changes) <= n:
+            raise ValueError("指定区间内未找到足够的根，请检查参数设置。")
+        a = E_scan[sign_changes[n]]
+        b = E_scan[sign_changes[n] + 1]
+
+    # 二分法
+    while b - a > precision:
+        mid = (a + b) / 2
+        fm = func(mid)
+        if np.isnan(fm):
+            mid += precision * 0.1
+            fm = func(mid)
+        fa = func(a)
+        if fa * fm < 0:
+            b = mid
+        else:
+            a = mid
+    energy_level = (a + b) / 2
     return energy_level
 
 
