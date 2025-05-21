@@ -117,6 +117,14 @@ def secant_method(f, a, b, tol=1e-8, max_iter=100):
     """
     x0, x1 = a, b
     f0, f1 = f(x0), f(x1)
+    if abs(f0) < tol:
+        return x0, 0, True
+    if abs(f1) < tol:
+        return x1, 0, True
+    if f0 * f1 > 0:
+        raise ValueError("f(a) and f(b) must have different signs.")
+    if abs(x1 - x0) < tol:
+        return x1, 0, False
     converged = False
     for iterations in range(1, max_iter + 1):
         if abs(f1 - f0) < 1e-14:  # 避免除以零
